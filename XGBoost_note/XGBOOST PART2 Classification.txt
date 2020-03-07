@@ -1,0 +1,48 @@
+XGBoost Part2 : XGBOOST TREE Classification
+(https://www.youtube.com/watch?v=8b1JEDvenQU)
+
+XGBOOST for large, complicated datasets 에 잘쓰임.
+
+1st step in fitting XGBOOST : make initial prediction.
+0.5 가 default.
+
+XGBOOST Classification has new formula for Similarity Scores.
+(분자는 같음, 분모도 람다(Regularization parameter 를 더해주는것은 같음)
+Sum of the Residuals의 제곱 / (sum of (previously predicted probability * (1-previously predicted probability) + lambda)
+
+0,1,1,0 의 값 즉 drug 가 효과 있고 없고 반반이라면 0.5 의 predicted drug effectiveness 에서 residual 은 -0.5, 0.5, 0.5, -0.5 가 되므로 Similarity Score의 분자는 0 이된다.
+따라서 Similarity Score = 0
+
+트리를 나누면 좋아지나 본다. last two observation 의 가운데로 먼저 분기 지점을 정한다.
+3개, 1개 씩 branch 가 나눠지면 똑같이 Similarity Score 를 구한다.
+
+Gain = similarity of left, right 를 더해서 - Root similarity 를 해주면된다.
+각 observation 사이를 모두 나눠 이처럼 Gain 을 구해준후 가장 높은 Gain 을 가진 기준으로 branch 를 나눈다.
+
+Gain 이 있을때까지 계속 나눈다.
+
+Cover 이라는 것에 의해 minimum number of Residuals in each leaf 가 결정된다.
+Cover 은 Similarity Score의 분모 - 람다이다.
+따라서 Classification, Regression 의 Cover 는 구하는 식이 다르다.
+default 로 minimum Cover 는 1 이다. 따라서, 이로 진행하였을때 트리가 증가하는데 영향이 없다.
+
+하지만, XGBOOST 를 분류에 사용하면 복잡해진다. Cover 는 previously predicted probability 를 이용하기에 소수점이 나올수있다. 하지만 minimum cover 은 1 이기에 특정 leaf 는 허용되지 않아서 알아서 pruning 이 진행된다.
+여기도 복잡해질수있는데 XGBOOST가 ROOT 만 남을 수도 있게된다. 하지만 ROOT 보다는 XGBOOST가 커야한다. 따라서 Cover 의 minimum 을 1로 설정해줘야 한다. 이를 위해서는, min_child_weight 을 0으로 설정해주면 된다.
+
+일반적으로 Pruning 은 회귀와 같이 Gain - Gamma 값을 기준으로 양수이면 Pruning 을 하지 않는 것으로 한다.
+여기서도 0이상의 lambda의 값은 reduce sensitivity of the tree to individual observations.
+
+Output value 는 sum of residual / (sum of (previously probability* (1- previously probability)) + lambda)
+
+Gradient Boost 분류 모델 처럼 prediction 을 만들때 probability 로  log(odds) value 를 만들어줘야한다.
+odds = p / (1-p) 이고 각 log 를 씌워 주면 된다. initial probability 는 0.5 이니
+Output = log(odds) = 0 가 된다.
+
+그리고 보통의 Gradient Boost 처럼 
+Output(log(odds)) of initial prediction + eta * output of tree를 해준다.
+
+new predicted log(odds) value 는 log(odds) + eta * output value of 특정 leaf 가 된다.
+이를 다시 Probability 로 바꿔주려하면 
+Probability = e^log(odds) / (1 + e^log(odds)) 식을 이용하여 계산한다.(Logistic Function)
+
+회귀와 마찬가지로 잔차를 줄여가는 과정을 계속해서 나아간다. 

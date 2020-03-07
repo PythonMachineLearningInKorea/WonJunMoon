@@ -1,0 +1,18 @@
+XGBoost Part1 : XGBOOST TREE REGRESSION
+(https://www.youtube.com/watch?v=OtD8wVaFm6E)
+람다를 설정해줌으로써 XG Boost 에서 overfitting 방지.
+특정 individual data 에 너무 적합되지 않게해줌.
+
+decision tree 에서의 gain 을 entropy 로 계산하듯
+XGBoost 에서는 gain 을 similarity 로 계산함.
+Similarity 는 (예측값에서 뺀 residual 들의 합의 전체제곱 / residual 의 갯수 + 람다)
+
+Output value 는 similarity 랑 식이 비슷하지만 분자에 제곱을 하지 않는다.
+
+따라서 XGBoost 의 최종 prediction 은 Predicted value + eta*OutputValue of 해당 leaf 이다.
+--> give smaller residuals --> 계속 트리를 만들고 make smaller residuals 반복.
+
+
+Gain value - Gamma 로 positive 면 not prune
+if 위에 식이 negative, prune the tree. --> prune 하면 위에 branch 도 negative 도 검사하고 prune.
+lambda 가 커질수록(Regularization Parameter) similarity score 가 줄어드므로 pruning 이 잘 일어나게 되고 output value 도 작아지게된다.
